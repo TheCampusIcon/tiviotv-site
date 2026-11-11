@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TivioTV | All in one. All on Tivio.</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080c; --panel:#111118; --panel2:#17171f; --line:#24242e;
+  --text:#f2f2f5; --muted:#8d8d9a; --accent:#7b5cff; --accent2:#a48bff; --live:#ff3b5c;
+  --slot:220px; --chan:190px; --row:72px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:28px;height:64px;padding:0 24px;background:rgba(8,8,12,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:6px;font-weight:800;font-size:24px;letter-spacing:-.5px}
+.logo .tv{background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:3px 5px;border-radius:5px;letter-spacing:.5px}
+.nav{display:flex;gap:6px}
+.nav a{padding:8px 14px;border-radius:999px;font-weight:600;font-size:14px;color:var(--muted)}
+.nav a.on{color:var(--text);background:var(--panel2)}
+.nav a:hover{color:var(--text)}
+.spacer{flex:1}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;width:240px;color:var(--muted);font-size:14px}
+.search input{background:none;border:0;outline:0;color:var(--text);width:100%;font:inherit}
+.btn{padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{border:1px solid var(--line)}
+
+/* live view */
+.stage{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:24px;padding:24px}
+.player{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000}
+.player .art{position:absolute;inset:0;transition:background .4s}
+.player .art::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85),rgba(0,0,0,0) 55%)}
+.player .glyph{position:absolute;inset:0;display:grid;place-items:center;font-size:88px;font-weight:800;opacity:.18;letter-spacing:-3px}
+.player .meta{position:absolute;left:22px;right:22px;bottom:20px;z-index:2}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--live);color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:5px;letter-spacing:.6px}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.player h2{font-size:26px;margin:10px 0 4px;letter-spacing:-.4px}
+.player .sub{color:#c9c9d3;font-size:14px}
+.bar{height:4px;background:rgba(255,255,255,.2);border-radius:4px;margin-top:14px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.controls{position:absolute;top:16px;right:16px;z-index:2;display:flex;gap:8px}
+.controls button{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center}
+.info{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.info .ch{display:flex;align-items:center;gap:12px}
+.chlogo{width:52px;height:52px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:15px;flex:none}
+.info h3{font-size:20px}
+.info p{color:var(--muted);font-size:14px;line-height:1.55}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tags span{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 9px;border-radius:999px}
+.upnext{border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--muted)}
+.upnext b{color:var(--text);display:block;font-size:14px;margin-top:3px}
+
+/* guide */
+.guide-wrap{display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--line)}
+.cats{padding:16px 12px;border-right:1px solid var(--line);position:sticky;top:64px;align-self:start;height:calc(100vh - 64px);overflow:auto}
+.cats button{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:600;color:var(--muted)}
+.cats button.on{background:var(--panel2);color:var(--text);box-shadow:inset 3px 0 0 var(--accent)}
+.cats button:hover{color:var(--text)}
+.guide{overflow-x:auto;position:relative}
+.timeline{display:flex;position:sticky;top:64px;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);height:44px}
+.timeline .corner{width:var(--chan);flex:none;position:sticky;left:0;background:var(--bg);display:flex;align-items:center;padding-left:16px;font-weight:700;font-size:13px;z-index:2}
+.timeline .t{width:var(--slot);flex:none;display:flex;align-items:center;padding-left:12px;font-size:13px;color:var(--muted);border-left:1px solid var(--line)}
+.grow{display:flex;height:var(--row);border-bottom:1px solid var(--line)}
+.grow.sel .cell-ch{background:var(--panel2)}
+.cell-ch{width:var(--chan);flex:none;position:sticky;left:0;z-index:3;background:var(--bg);display:flex;align-items:center;gap:10px;padding:0 12px;border-right:1px solid var(--line);cursor:pointer}
+.cell-ch .num{font-size:12px;color:var(--muted);width:26px}
+.cell-ch .chlogo{width:44px;height:44px;font-size:12px}
+.cell-ch .nm{font-size:12px;font-weight:600;line-height:1.2}
+.progs{position:relative;flex:none}
+.prog{position:absolute;top:6px;bottom:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;overflow:hidden;cursor:pointer;transition:background .15s}
+.prog:hover{background:var(--panel2);border-color:#3a3a48}
+.prog.now{background:#1d1830;border-color:#3d3166}
+.prog.playing{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.prog b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog small{font-size:11px;color:var(--muted)}
+.nowline{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:4;pointer-events:none}
+.nowline::before{content:"";position:absolute;top:-1px;left:-4px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+
+/* on demand */
+.hero{margin:24px;border-radius:16px;min-height:380px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:40px}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.85),rgba(0,0,0,.1))}
+.hero .in{position:relative;z-index:2;max-width:520px}
+.hero .kick{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)}
+.hero h1{font-size:44px;letter-spacing:-1px;margin:8px 0 10px;line-height:1.05}
+.hero p{color:#d0d0da;line-height:1.55;margin-bottom:20px}
+.hero .row{display:flex;gap:10px}
+.shelf{padding:8px 24px 18px}
+.shelf h4{font-size:18px;margin-bottom:12px}
+.rail{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.card{flex:none;width:220px;cursor:pointer}
+.card .poster{aspect-ratio:16/9;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:20px;letter-spacing:-.5px;text-align:center;padding:10px;position:relative;overflow:hidden;transition:transform .2s}
+.card:hover .poster{transform:scale(1.04)}
+.card .poster em{position:absolute;top:8px;left:8px;font-style:normal;font-size:10px;font-weight:800;background:rgba(0,0,0,.6);padding:3px 6px;border-radius:4px}
+.card b{display:block;font-size:14px;margin-top:8px}
+.card small{color:var(--muted);font-size:12px}
+
+.footer{padding:40px 24px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+
+
+.sec{padding:64px 24px;max-width:1200px;margin:0 auto}
+.sec .kick{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)}
+.sec h2{font-size:34px;letter-spacing:-.8px;margin:8px 0 10px}
+.sec .lead{color:var(--muted);max-width:620px;line-height:1.6}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:32px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+.step .n{width:44px;height:44px;font-size:20px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-weight:800;margin-bottom:16px}
+.step h3{font-size:18px;margin-bottom:8px}.step p{color:var(--muted);font-size:14px;line-height:1.55}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:32px}
+.plan{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:14px;position:relative}
+.plan.pop{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 20px 60px -20px rgba(123,92,255,.5)}
+.plan .tag{position:absolute;top:-12px;left:28px;background:var(--accent);font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.5px}
+.plan h3{font-size:20px}.price{font-size:40px;font-weight:800;letter-spacing:-1px}.price small{font-size:15px;color:var(--muted);font-weight:500}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14px;color:#cfcfd8;flex:1}
+.plan li::before{content:"✓";color:var(--accent2);font-weight:800;margin-right:9px}
+.plan .btn{text-align:center}
+.faq{margin-top:28px;display:flex;flex-direction:column;gap:10px}
+.faq details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.faq summary{font-weight:700;cursor:pointer;list-style:none}.faq summary::after{content:"+";float:right;color:var(--muted)}
+.faq details[open] summary::after{content:"−"}
+.faq p{color:var(--muted);margin-top:10px;line-height:1.6;font-size:14px}
+.cta{margin:24px;border-radius:18px;padding:56px 40px;text-align:center;background:radial-gradient(circle at 50% 0,#7b5cff 0,#2a1c66 45%,#0b0b14 100%)}
+.cta h2{font-size:34px;letter-spacing:-.8px;margin-bottom:10px}.cta p{color:#d0d0da;margin-bottom:22px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;place-items:center;padding:20px}
+.modal.on{display:grid}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px;width:100%;max-width:440px}
+.box h3{font-size:22px;margin-bottom:6px}.box .muted{color:var(--muted);font-size:14px;line-height:1.55}
+.sum{background:var(--panel2);border-radius:12px;padding:16px;margin:18px 0;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.sum div{display:flex;justify-content:space-between}.sum .tot{border-top:1px solid var(--line);padding-top:10px;font-weight:800}
+.box .btn{display:block;width:100%;text-align:center;margin-top:10px}
+.phone{font-weight:800;color:var(--accent2)}
+.secnav{scroll-margin-top:70px}
+
+.mega{position:relative;height:calc(100vh - 64px);min-height:620px;overflow:hidden;display:grid;place-items:center;text-align:center}
+.mosaic{position:absolute;left:50%;top:50%;width:170%;transform:translate(-50%,-50%) rotate(-12deg);display:grid;grid-template-columns:repeat(8,1fr);gap:12px;opacity:.6}
+.tile{aspect-ratio:4/3;background-size:cover;background-position:center;border-radius:10px;display:flex;align-items:flex-end;padding:12px;font-weight:800;font-size:clamp(12px,1.3vw,20px);line-height:1.05;letter-spacing:-.3px;text-transform:uppercase;position:relative;overflow:hidden}
+
+.tile span{position:relative;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.mega::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(8,8,12,.55) 0,rgba(8,8,12,.85) 60%,rgba(8,8,12,1) 100%)}
+.mega .in{position:relative;z-index:2;padding:0 24px;max-width:1100px}
+.mega h1{font-size:clamp(40px,7vw,96px);line-height:1;letter-spacing:-2.5px;font-weight:800}
+.mega h1 em{font-style:normal;color:var(--accent2)}
+.mega p{font-size:clamp(16px,1.6vw,21px);font-weight:600;color:#e4e4ea;margin:26px auto 34px;max-width:780px;line-height:1.45}
+.mega .btn{font-size:20px;padding:20px 48px}
+.mega .price-pill{display:inline-block;margin-top:18px;color:var(--muted);font-size:14px}
+
+.band{position:relative;min-height:560px;overflow:hidden;display:flex;align-items:center;border-top:1px solid var(--line)}
+.band .mosaic{width:120%;left:62%;grid-template-columns:repeat(5,1fr);opacity:.75}
+.band.flip .mosaic{left:38%}
+.band::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,8,12,1) 0,rgba(8,8,12,.92) 38%,rgba(8,8,12,.25) 75%,rgba(8,8,12,.6) 100%)}
+.band.flip::after{background:linear-gradient(270deg,rgba(8,8,12,1) 0,rgba(8,8,12,.92) 38%,rgba(8,8,12,.25) 75%,rgba(8,8,12,.6) 100%)}
+.band .in{position:relative;z-index:2;max-width:1200px;width:100%;margin:0 auto;padding:60px 24px}
+.band.flip .in{display:flex;justify-content:flex-end}
+.band .txt{max-width:500px}
+.band .kick{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)}
+.band h2{font-size:clamp(34px,4.5vw,58px);line-height:1.02;letter-spacing:-1.5px;margin:10px 0 16px}
+.band p{color:#d4d4dc;font-size:17px;line-height:1.55;margin-bottom:26px}
+.band .btn{font-size:16px;padding:14px 32px}
+@media (max-width:900px){.band::after,.band.flip::after{background:rgba(8,8,12,.8)}.band .mosaic,.band.flip .mosaic{left:50%;width:180%}.band.flip .in{justify-content:flex-start}}
+.one{max-width:460px;margin:32px auto 0}
+@media (max-width:900px){
+  .top{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px 12px}
+  .top>span{display:none}
+  .top .btn.primary{padding:8px 14px;font-size:13px}
+  .top .nav{order:3;width:100%;max-width:none;overflow:visible;flex-wrap:nowrap;justify-content:space-between;gap:0;padding-bottom:2px}
+  .top{background:rgba(8,8,12,.98)}
+  .nav::-webkit-scrollbar{display:none}
+  .top .nav a{padding:6px 8px;font-size:12.5px;white-space:nowrap}
+  .mega{height:auto;min-height:calc(100svh - 110px);padding:60px 0}
+}
+.two{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;max-width:920px;margin:40px auto 0}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.page{display:none}.page.on{display:block}
+.page>.sec:first-child{padding-top:72px}
+@media (max-width:900px){.nav{overflow-x:auto;max-width:55vw}.nav a{white-space:nowrap}}
+@media (max-width:900px){.steps,.plans{grid-template-columns:1fr}}
+@media (max-width:900px){
+  .stage{grid-template-columns:1fr}
+  .guide-wrap{grid-template-columns:1fr}
+  .cats{position:static;height:auto;display:flex;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .cats button{white-space:nowrap;width:auto}
+  .search{display:none}
+  :root{--chan:120px;--slot:180px}
+  .cell-ch .nm{display:none}
+  .hero h1{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="logo" href="#home">tivio<span class="tv">TV</span></a>
+  <nav class="nav">
+    <a href="#home" data-p="home">Home</a>
+    <a href="#how-it-works" data-p="how-it-works">How it works</a>
+    <a href="#whats-included" data-p="whats-included">What's Included</a>
+    <a href="#pricing" data-p="pricing">Pricing</a>
+    <a href="#faq" data-p="faq">FAQ</a>
+  </nav>
+  <div class="spacer"></div>
+  <label class="search" style="display:none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" placeholder="Search channels and shows">
+  </label>
+  <span style="font-size:13px;color:var(--muted)">Support: <span class="phone">(762) 218-9309</span></span>
+  <button class="btn primary" data-go="plans">Get started</button>
+</header>
+
+<main>
+  <div class="page" id="p-home">
+  <section class="mega">
+    <div class="mosaic" id="mosaic"></div>
+    <div class="in">
+      <h1>Your TV, <em>Set Up For You</em></h1>
+      <p>We ship you a Fire TV Stick, get it running with you over the phone and handle the tech so you never have to.</p>
+      <button class="btn primary" data-go="plans">Get Started</button>
+      <div class="price-pill">Free Fire TV Stick for our first customers · Just $40/month</div>
+    </div>
+  </section>
+  <section style="padding:48px 24px 40px;text-align:center;position:relative">
+    <button data-snd-for="promoVid" class="btn primary" style="position:absolute;z-index:3;top:68px;left:50%;transform:translateX(-50%);box-shadow:0 8px 30px rgba(0,0,0,.5)">🔊 Tap for sound</button>
+    <video id="promoVid" src="video/tivio_promo_720.mp4" poster="video/poster.jpg" autoplay muted loop playsinline controls preload="auto" style="width:100%;max-width:1100px;border-radius:16px;border:1px solid var(--line);box-shadow:0 30px 80px -30px rgba(123,92,255,.5);background:#08080c"></video>
+  </section>
+  <div id="bands"></div>
+  <section class="cta">
+    <h2>Ready to watch?</h2>
+    <p>Pick a plan, get your stick, and we'll handle the rest.</p>
+    <button class="btn primary" data-go="plans">Get started</button>
+  </section>
+  </div>
+  <div class="page" id="p-how-it-works">
+  <section class="sec secnav" id="how">
+    <div class="kick">HOW IT WORKS</div>
+    <h2>Up and running in three steps</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Choose your plan</h3><p>Pick the package that fits and check out securely online.</p></div>
+      <div class="step"><div class="n">2</div><h3>Get your Fire TV Stick</h3><p>We ship a Fire TV Stick to your door. Just plug it into your TV.</p></div>
+      <div class="step"><div class="n">3</div><h3>We set it up with you</h3><p>Call our support team and we walk you through setup over the phone, start to finish.</p></div>
+    </div>
+    <div style="position:relative;margin-top:40px;text-align:center">
+      <button data-snd-for="promoVid2" class="btn primary" style="position:absolute;z-index:3;top:20px;left:50%;transform:translateX(-50%);box-shadow:0 8px 30px rgba(0,0,0,.5)">🔊 Tap for sound</button>
+      <video id="promoVid2" src="video/tivio_promo_720.mp4" poster="video/poster.jpg" autoplay muted loop playsinline controls preload="metadata" style="width:100%;border-radius:16px;border:1px solid var(--line);box-shadow:0 30px 80px -30px rgba(123,92,255,.5);background:#08080c"></video>
+    </div>
+  </section>
+  <section class="cta">
+    <h2>Ready to watch?</h2>
+    <p>Pick a plan, get your stick, and we'll handle the rest.</p>
+    <button class="btn primary" data-go="plans">Get started</button>
+  </section>
+  </div>
+  <div class="page" id="p-whats-included">
+  <section class="sec secnav" id="included">
+    <div class="kick">WHAT'S INCLUDED</div>
+    <h2>Everything you get with Tivio</h2>
+    <div class="steps">
+      <div class="step"><div class="n">📦</div><h3>Your Fire TV Stick</h3><p>Free for our first customers and shipped free to your door. Plug it into any TV with Wi-Fi.</p></div>
+      <div class="step"><div class="n">📞</div><h3>Live setup call</h3><p>Our team walks you through everything over the phone, start to finish, until it all works.</p></div>
+      <div class="step"><div class="n">📱</div><h3>Your apps, your way</h3><p>We help you pick and install the apps you want, like YouTube, free live TV apps and your favorite services.</p></div>
+      <div class="step"><div class="n">🛠️</div><h3>Ongoing support</h3><p>Something acting up? Call or email and we fix it. That is what your $40 a month covers.</p></div>
+      <div class="step"><div class="n">✈️</div><h3>Take it anywhere</h3><p>Home, hotel or a friend's place. Bring your stick and plug it in.</p></div>
+      <div class="step"><div class="n">💸</div><h3>Pay for what you use</h3><p>We help you figure out which services you actually need and cancel the rest.</p></div>
+    </div>
+  </section>
+  <section class="cta">
+    <h2>Ready to watch?</h2>
+    <p>Pick a plan, get your stick, and we'll handle the rest.</p>
+    <button class="btn primary" data-go="plans">Get started</button>
+  </section>
+  </div>
+  <div class="page" id="p-pricing">
+  <section class="sec secnav" id="plans">
+    <div class="kick">PLANS</div>
+    <h2>One simple plan</h2>
+    <p class="lead">Your Fire TV Stick and setup call are free. Just $40 a month keeps our team on call for you.</p>
+    <div class="one" id="planGrid"></div>
+  </section>
+  </div>
+  <div class="page" id="p-faq">
+  <section class="sec" >
+    <div class="kick">FAQ</div><h2>Questions</h2>
+    <div class="faq">
+      <details><summary>What do I need?</summary><p>A TV with an HDMI port and a Wi-Fi connection. We send the Fire TV Stick 4K Plus. Tivio works on the Fire TV Stick 4K Plus and 4K Max only.</p></details>
+      <details><summary>Do you have a referral program?</summary><p>Yes. Send us a friend who signs up and your next month is free.</p></details>
+      <details><summary>How does setup work?</summary><p>Once your stick arrives, call our support line at <span class="phone">(762) 218-9309</span> or email <a class="phone" href="mailto:support@tiviotv.com">support@tiviotv.com</a>. We stay on the phone with you until everything is working.</p></details>
+      <details><summary>How long does shipping take?</summary><p>Most orders arrive in 3 to 5 business days.</p></details>
+      <details><summary>How much does it cost?</summary><p>Right now our first customers get the Fire TV Stick 4K Plus and phone setup free, with no setup fee. You just pay $40 a month for ongoing support. Any streaming subscriptions you choose are billed by those services.</p></details>
+      <details><summary>Can I use my own apps?</summary><p>Yes. It is your Fire TV Stick. Use YouTube, free live TV apps or any service you subscribe to. We help you set them up and keep them running.</p></details>
+      <details><summary>Can I take it with me?</summary><p>Yes. Plug it into any TV with Wi-Fi, at home, on vacation or at a friend's place. Some apps limit what is available outside the US.</p></details>
+    </div>
+  </section>
+  <section class="cta">
+    <h2>Ready to watch?</h2>
+    <p>Pick a plan, get your stick, and we'll handle the rest.</p>
+    <button class="btn primary" data-go="plans">Get started</button>
+  </section>
+  </div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="mTitle"></h3>
+    <p class="muted">You'll pay securely on the next page. After checkout, your Fire TV Stick ships and our team will be ready for your setup call.</p>
+    <div class="sum" id="mSum"></div>
+    <a class="btn primary" id="mPay" href="https://buy.stripe.com/dRmfZi7Kh0L9dlU6uW1VK01" target="_blank" rel="noopener">Continue to payment</a>
+    <button class="btn ghost" id="mClose">Back</button>
+    <p class="muted" style="margin-top:14px;font-size:12px;text-align:center">Questions? Call <span class="phone">(762) 218-9309</span> or email support@tiviotv.com</p>
+  </div>
+</div>
+
+<div class="modal" id="promo">
+  <div class="box" style="position:relative;text-align:center;max-width:420px">
+    <button id="promoX" aria-label="Close" style="position:absolute;top:12px;right:14px;font-size:22px;color:var(--muted)">×</button>
+    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)">FIRST CUSTOMERS ONLY</div>
+    <div id="promoArt"></div>
+    <h3 style="font-size:26px;letter-spacing:-.5px">Get your Fire TV Stick free</h3>
+    <p class="muted" style="margin-top:6px">No setup fee. We ship the stick, set it up with you over the phone and handle the tech. Just $40 a month.</p>
+    <a class="btn primary" href="https://buy.stripe.com/5kQ28s5C92ThepY7z01VK02" target="_blank" rel="noopener" style="margin-top:20px;font-size:16px;padding:14px">Claim my free stick</a>
+    <button class="btn ghost" id="promoLater">Maybe later</button>
+    <p class="muted" style="margin-top:12px;font-size:12px">Questions? Call <span class="phone">(762) 218-9309</span></p>
+  </div>
+</div>
+
+<section class="sec" style="text-align:center;padding:48px 24px">
+  <div class="kick">STAY IN THE LOOP</div>
+  <h2>Get TivioTV updates</h2>
+  <p class="lead" style="margin:0 auto 22px">New channels, deals and service news, straight to your inbox. Unsubscribe anytime.</p>
+  <a class="btn primary" href="https://manage.kmail-lists.com/subscriptions/subscribe?a=SvdJK7&g=RwRaF7" target="_blank" rel="noopener" style="display:inline-block;font-size:16px;padding:14px 32px">Sign up for emails</a>
+</section>
+
+<footer class="footer">
+  <div><span class="logo" style="font-size:18px">tivio<span class="tv">TV</span></span><div style="margin-top:8px">All in one. All on Tivio.</div></div>
+  <div style="display:flex;gap:18px;align-items:center"><a href="https://www.instagram.com/tiviotv/">Instagram</a><a href="https://manage.kmail-lists.com/subscriptions/subscribe?a=SvdJK7&g=RwRaF7" target="_blank" rel="noopener">Email updates</a><a href="tel:+17622189309">Support: (762) 218-9309</a><a href="mailto:support@tiviotv.com">support@tiviotv.com</a><span>Terms</span><span>Photos: Pexels</span><span>Privacy</span><span>© 2026 TivioTV</span></div>
+</footer>
+
+<script>
+const CATS=["All","Featured","Movies","Sports","Comedy","True Crime","Reality","Kids","News","Retro"];
+const C=[
+ {n:101,name:"Tivio Spotlight",ab:"TS",cat:"Featured",c:["#7b5cff","#2a1c66"]},
+ {n:102,name:"Action Vault",ab:"AV",cat:"Movies",c:["#ff5a3c","#4a1208"]},
+ {n:103,name:"Midnight Thrillers",ab:"MT",cat:"Movies",c:["#3c8dff","#081a3a"]},
+ {n:201,name:"Fight Night Live",ab:"FN",cat:"Sports",c:["#ff2e4d","#3a0610"]},
+ {n:202,name:"Hoop Talk",ab:"HT",cat:"Sports",c:["#ff9d2e","#3d2104"]},
+ {n:203,name:"Gridiron Classics",ab:"GC",cat:"Sports",c:["#2ec27e","#06301c"]},
+ {n:301,name:"Laugh Track",ab:"LT",cat:"Comedy",c:["#ffd23c","#3d3004"]},
+ {n:302,name:"Stand-Up Stage",ab:"SU",cat:"Comedy",c:["#e45cff","#33093d"]},
+ {n:401,name:"Case Files 24/7",ab:"CF",cat:"True Crime",c:["#9aa4b8","#1a1d24"]},
+ {n:402,name:"Cold Trail",ab:"CT",cat:"True Crime",c:["#5cc8ff","#06263a"]},
+ {n:501,name:"Kitchen Clash",ab:"KC",cat:"Reality",c:["#ff7a5c","#3d1308"]},
+ {n:502,name:"Flip House",ab:"FH",cat:"Reality",c:["#5cffb0","#063a22"]},
+ {n:601,name:"Cartoon Corner",ab:"CC",cat:"Kids",c:["#ffb43c","#3d2604"]},
+ {n:701,name:"Tivio News Now",ab:"NN",cat:"News",c:["#3c6bff","#08123d"]},
+ {n:801,name:"Rewind 90s",ab:"90",cat:"Retro",c:["#ff5cb0","#3d0626"]},
+ {n:802,name:"Sitcom Throwbacks",ab:"ST",cat:"Retro",c:["#c8ff5c","#2c3d06"]},
+];
+const SHOWS={
+ Featured:["Tivio Originals Hour","Behind the Stream","Weekend Picks","Creator Spotlight"],
+ Movies:["Steel Horizon","Last Exit North","The Quiet Job","Red Line Run","Night Shift","Breakpoint","Hollow Creek"],
+ Sports:["Fight Night Breakdown","Prelims Recap","Courtside Debate","Classic Matchups","Picks & Predictions","Overtime"],
+ Comedy:["Open Mic Madness","Family Dinner","Roast Room","Late Laughs","Office Hours"],
+ "True Crime":["The Vanishing","Evidence Room","Interrogation Tapes","Cold Case Unit","Final Witness"],
+ Reality:["Chef Showdown","Budget Flip","House Rules","Street Eats","Makeover Mile"],
+ Kids:["Robo Pals","Jungle Jam","Space Scouts","Doodle Town","Sky Racers"],
+ News:["Morning Brief","Midday Update","Tech Today","Market Wrap","World Desk"],
+ Retro:["Saturday Morning Mix","Throwback Theater","Block Party","Prime Time Classics","Mixtape TV"],
+};
+const DESC={
+ Featured:"Hand-picked shows from across Tivio, all in one channel.",
+ Movies:"Full-length movies streaming nonstop.",
+ Sports:"Highlights, debates and classic games around the clock.",
+ Comedy:"Stand-up, sitcoms and sketches running all day.",
+ "True Crime":"Real cases, real detectives, streaming 24/7.",
+ Reality:"Competitions, makeovers and everything in between.",
+ Kids:"Family-friendly cartoons and adventures.",
+ News:"Headlines and updates throughout the day.",
+ Retro:"The shows you grew up on, back on air.",
+};
+
+// build deterministic schedule starting at the current half hour
+const SLOT_MIN=30, SLOTS=8;
+const now=new Date();
+const start=new Date(now); start.setMinutes(now.getMinutes()<30?0:30,0,0);
+function rnd(seed){let x=Math.sin(seed)*10000;return x-Math.floor(x)}
+C.forEach((ch,i)=>{
+  const list=SHOWS[ch.cat]; ch.progs=[]; let t=-15, k=0;
+  while(t<SLOTS*SLOT_MIN){
+    const dur=[30,30,60,60,90,120][Math.floor(rnd(i*31+k*7)*6)];
+    ch.progs.push({title:list[(i+k)%list.length],ep:"S"+(1+Math.floor(rnd(i+k)*4))+" E"+(1+Math.floor(rnd(k*3+i)*12)),s:t,d:dur});
+    t+=dur;k++;
+  }
+});
+const nowMin=(now-start)/60000;
+const fmt=d=>d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+const at=m=>new Date(start.getTime()+m*60000);
+const grad=c=>`linear-gradient(135deg,${c[0]},${c[1]})`;
+
+let cat="All", sel=C[0], q="";
+const $=id=>document.getElementById(id);
+
+function renderCats(){
+  $("cats").innerHTML=CATS.map(c=>`<button class="${c===cat?"on":""}" data-c="${c}">${c}</button>`).join("");
+  $("cats").querySelectorAll("button").forEach(b=>b.onclick=()=>{cat=b.dataset.c;renderCats();renderGuide()});
+}
+function current(ch){return ch.progs.find(p=>nowMin>=p.s&&nowMin<p.s+p.d)||ch.progs[0]}
+function play(ch,p){
+  sel=ch; p=p||current(ch);
+  $("pArt").style.background=`radial-gradient(circle at 70% 35%,${ch.c[0]} 0,${ch.c[1]} 55%,#000 100%)`;
+  $("pGlyph").textContent=ch.ab;
+  $("pTitle").textContent=p.title;
+  $("pSub").textContent=`${ch.name} · ${p.ep} · ${fmt(at(p.s))} to ${fmt(at(p.s+p.d))}`;
+  $("pBar").style.width=Math.max(4,Math.min(100,(nowMin-p.s)/p.d*100))+"%";
+  $("iLogo").style.background=grad(ch.c);$("iLogo").textContent=ch.ab;
+  $("iNum").textContent="Channel "+ch.n;$("iCh").textContent=ch.name;
+  $("iDesc").textContent=DESC[ch.cat];
+  $("iTags").innerHTML=[ch.cat,"HD","Live"].map(t=>`<span>${t}</span>`).join("");
+  const nx=ch.progs[ch.progs.indexOf(p)+1];
+  $("iNext").textContent=nx?`${nx.title} · ${fmt(at(nx.s))}`:"More coming soon";
+  renderGuide(p);
+}
+function renderGuide(playing){
+  playing=playing||current(sel);
+  const px=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--slot"))/SLOT_MIN;
+  const width=SLOTS*SLOT_MIN*px;
+  const list=C.filter(c=>(cat==="All"||c.cat===cat)&&(!q||(c.name+" "+c.progs.map(p=>p.title).join(" ")).toLowerCase().includes(q)));
+  let h=`<div class="timeline"><div class="corner">${now.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</div>`;
+  for(let s=0;s<SLOTS;s++)h+=`<div class="t">${s===0?"Now · ":""}${fmt(at(s*SLOT_MIN))}</div>`;
+  h+=`</div><div style="position:relative">`;
+  list.forEach(ch=>{
+    h+=`<div class="grow ${ch===sel?"sel":""}"><div class="cell-ch" data-n="${ch.n}"><span class="num">${ch.n}</span><div class="chlogo" style="background:${grad(ch.c)}">${ch.ab}</div><span class="nm">${ch.name}</span></div><div class="progs" style="width:${width}px">`;
+    ch.progs.forEach((p,i)=>{
+      const l=Math.max(0,p.s)*px, r=Math.min(SLOTS*SLOT_MIN,p.s+p.d)*px; if(r<=l)return;
+      const isNow=nowMin>=p.s&&nowMin<p.s+p.d;
+      h+=`<div class="prog ${isNow?"now":""} ${ch===sel&&p===playing?"playing":""}" data-n="${ch.n}" data-i="${i}" style="left:${l+3}px;width:${r-l-6}px"><b>${p.title}</b><small>${p.s<0?"Started "+fmt(at(p.s)):fmt(at(p.s))} · ${p.d} min</small></div>`;
+    });
+    h+=`</div></div>`;
+  });
+  if(!list.length)h+=`<div style="padding:40px;color:var(--muted)">No channels match.</div>`;
+  h+=`<div class="nowline" style="left:calc(var(--chan) + ${nowMin*px}px)"></div></div>`;
+  $("guide").innerHTML=h;
+  $("guide").querySelectorAll(".cell-ch").forEach(e=>e.onclick=()=>{play(C.find(c=>c.n==e.dataset.n));document.querySelector(".stage").scrollIntoView({behavior:"smooth",block:"center"})});
+  $("guide").querySelectorAll(".prog").forEach(e=>e.onclick=()=>{const ch=C.find(c=>c.n==e.dataset.n);play(ch,ch.progs[e.dataset.i]);document.querySelector(".stage").scrollIntoView({behavior:"smooth",block:"center"})});
+}
+
+const pal=C.map(c=>c.c);
+// hero mosaic
+const TT=["Steel Horizon","The Vanishing","Chef Showdown","Fight Night","Robo Pals","Last Exit North","Roast Room","Cold Case Unit","Street Eats","Space Scouts","Red Line Run","Night Shift","Block Party","Evidence Room","Courtside","Hollow Creek","Budget Flip","Late Laughs","Mixtape TV","Breakpoint","Jungle Jam","Final Witness","House Rules","Overtime","The Quiet Job","Sky Racers","Prime Time","Open Mic"];
+function mosaic(imgs,n,off){let m="";for(let i=0;i<n;i++){m+=`<div class="tile" style="background-image:url(img/${imgs[(i*3+off)%imgs.length]})"></div>`}return m}
+const IM={"sports": ["sports_14460275.jpg", "sports_17892071.jpg", "sports_2600493.jpg", "sports_30651230.jpg", "sports_31040982.jpg", "sports_3531081.jpg"], "movies": ["movies_18515130.jpg", "movies_7234216.jpg", "movies_7234229.jpg", "movies_7991266.jpg", "movies_7991274.jpg", "movies_7991320.jpg", "movies_7991327.jpg", "movies_8263318.jpg"], "family": ["family_12788370.jpg", "family_12788382.jpg", "family_12788649.jpg", "family_12788660.jpg", "family_12788662.jpg", "family_5813746.jpg"], "kids": ["kids_4474011.jpg", "kids_4474032.jpg"]};
+const ALL=[...IM.sports,...IM.movies,...IM.family,...IM.kids];
+$("mosaic").innerHTML=mosaic(ALL,56,0);
+const BANDS=[
+ {k:"LIVE TV",im:[...IM.family,...IM.sports],h:"Live TV, your way",p:"We help you set up the live TV apps that fit you, from free live channels to the services you already pay for.",t:["Tivio News Now","Midday Update","Rewind 90s","Mixtape TV","Block Party","World Desk","Tech Today","Prime Time","Throwback Theater","Morning Brief"],pal:[["#3c6bff","#08123d"],["#ff5cb0","#3d0626"],["#7b5cff","#2a1c66"],["#5cc8ff","#06263a"]]},
+ {k:"MOVIES",im:IM.movies,h:"Movie night, ready to go",p:"Your movie apps installed, signed in and organized, so you can press play instead of troubleshooting.",t:["Steel Horizon","Last Exit North","The Quiet Job","Red Line Run","Night Shift","Breakpoint","Hollow Creek","Iron Pact","Dead Heat","Silent Coast"],pal:[["#ff5a3c","#4a1208"],["#3c8dff","#081a3a"],["#ffb43c","#3d2604"],["#9aa4b8","#1a1d24"]]},
+ {k:"SHOWS",im:[...IM.family,...IM.movies],h:"All your shows on one remote",p:"Every app on one stick and arranged the way you like, so finding your next episode is easy.",t:["Family Dinner","Chef Showdown","The Vanishing","Budget Flip","House Rules","Evidence Room","Office Hours","Street Eats","Cold Case Unit","Makeover Mile"],pal:[["#ffd23c","#3d3004"],["#ff7a5c","#3d1308"],["#5cffb0","#063a22"],["#e45cff","#33093d"]]},
+ {k:"SPORTS",im:IM.sports,h:"Never miss the game",p:"We help you find the right apps and services for the teams, leagues and fights you follow, then set them up.",t:["Football Sunday","Hoops Live","Fight Night","Diamond Day","Puck Drop","Matchday","Main Card","Title Bout","Courtside","Gridiron Live","Tee Time","Race Day"],pal:[["#ff2e4d","#3a0610"],["#ff9d2e","#3d2104"],["#2ec27e","#06301c"],["#3c6bff","#08123d"],["#7b5cff","#2a1c66"]]},
+ {k:"KIDS & FAMILY",im:[...IM.kids,...IM.family],h:"Set up for the whole family",p:"Kid-friendly apps, profiles and parental controls set up the right way from day one.",t:["Robo Pals","Jungle Jam","Space Scouts","Doodle Town","Sky Racers","Cartoon Corner","Puzzle Pups","Ocean Friends","Dino Dash","Star Gazers"],pal:[["#ffb43c","#3d2604"],["#5cc8ff","#06263a"],["#c8ff5c","#2c3d06"],["#ff5cb0","#3d0626"]]},
+];
+$("bands").innerHTML=BANDS.map((b,i)=>`<section class="band ${i%2?"flip":""}"><div class="mosaic">${mosaic(b.im,30,i)}</div><div class="in"><div class="txt"><div class="kick">${b.k}</div><h2>${b.h}</h2><p>${b.p}</p><button class="btn primary" data-go="plans">Get Started</button></div></div></section>`).join("");
+// plans (placeholder prices + payment links)
+const STICK='<svg viewBox="0 0 320 140" width="100%" style="max-width:320px;display:block;margin:6px auto 2px" role="img" aria-label="Streaming stick and remote"><defs><linearGradient id="gs" x1="0" x2="1"><stop offset="0" stop-color="#2c2c38"/><stop offset="1" stop-color="#15151c"/></linearGradient><radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7b5cff" stop-opacity=".45"/><stop offset="1" stop-color="#7b5cff" stop-opacity="0"/></radialGradient></defs><ellipse cx="160" cy="75" rx="150" ry="62" fill="url(#glow)"/><g transform="rotate(-8 120 72)"><rect x="40" y="55" width="150" height="34" rx="10" fill="url(#gs)" stroke="#3a3a48"/><rect x="190" y="62" width="26" height="20" rx="3" fill="#8d8d9a"/><rect x="196" y="66" width="20" height="12" rx="1" fill="#5a5a66"/><circle cx="60" cy="72" r="3" fill="#7b5cff"/><text x="115" y="77" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#f2f2f5" opacity=".85">tivio</text></g><g transform="rotate(10 255 74)"><rect x="238" y="18" width="34" height="112" rx="17" fill="url(#gs)" stroke="#3a3a48"/><circle cx="255" cy="46" r="11" fill="none" stroke="#8d8d9a" stroke-width="2"/><circle cx="255" cy="46" r="4" fill="#8d8d9a"/><circle cx="255" cy="29" r="3" fill="#7b5cff"/><circle cx="247" cy="70" r="3.5" fill="#5a5a66"/><circle cx="263" cy="70" r="3.5" fill="#5a5a66"/><circle cx="247" cy="84" r="3.5" fill="#5a5a66"/><circle cx="263" cy="84" r="3.5" fill="#5a5a66"/></g></svg>';
+const PLANS=[
+ {name:"Launch Offer",tag:"FIRST CUSTOMERS ONLY",price:40,setup:40,stick:0,pop:true,pay:"https://buy.stripe.com/5kQ28s5C92ThepY7z01VK02",feat:["Free Fire TV Stick 4K Plus, no setup fee","Free shipping","Live setup call with the Tivio team","Help choosing and installing your apps","Ongoing phone and email support","Works on any TV with Wi-Fi"]},
+ {name:"Standard",hidden:true,price:40,setup:100,stick:0,pop:false,pay:"https://buy.stripe.com/dRmfZi7Kh0L9dlU6uW1VK01",feat:["Fire TV Stick 4K Plus included with setup","Already have a 4K Plus or 4K Max? Just ask","Free shipping","Live setup call with the Tivio team","Help choosing and installing your apps","Ongoing phone and email support","Works on any TV with Wi-Fi"]},
+];
+$("planGrid").innerHTML=PLANS.map((p,i)=>p.hidden?"":`<div class="plan ${p.pop?"pop":""}">${p.tag?`<div class="tag">${p.tag}</div>`:""}${p.pop?STICK:""}<h3>${p.name}</h3><div class="price">$${p.price}<small>/month</small></div><div style="color:var(--muted);font-size:14px;margin-top:-6px">${p.setup===p.price?"Your Fire TV Stick is free. Just $"+p.price+" to start.":"$"+p.setup+" to start, which covers your Fire TV Stick, setup and first month"}</div><ul>${p.feat.map(f=>`<li>${f}</li>`).join("")}</ul><button class="btn ${p.pop?"primary":"ghost"}" data-plan="${i}">Get Started</button></div>`).join("");
+document.querySelectorAll("[data-plan]").forEach(b=>b.onclick=()=>{
+  const p=PLANS[b.dataset.plan];
+  $("mTitle").textContent="Your Tivio order";
+  $("mSum").innerHTML=`<div><span>Setup + Fire TV Stick</span><span>${p.setup-p.price?"$"+(p.setup-p.price):"Free"}</span></div><div><span>First month</span><span>$${p.price}</span></div><div><span>Shipping</span><span>Free</span></div><div class="tot"><span>Due today</span><span>$${p.setup.toFixed(2)}</span></div><div style="color:var(--muted);font-size:13px"><span>Then $${p.price}/month</span><span></span></div>`;
+  $("mPay").href=p.pay;
+  $("modal").classList.add("on");
+});
+$("mClose").onclick=()=>$("modal").classList.remove("on");
+$("modal").onclick=e=>{if(e.target.id==="modal")$("modal").classList.remove("on")};
+const PAGES=["home","how-it-works","whats-included","pricing","faq"];
+function route(){let p=(location.hash||"#home").slice(1);if(!PAGES.includes(p))p="home";document.querySelectorAll(".page").forEach(e=>e.classList.toggle("on",e.id==="p-"+p));document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("on",a.dataset.p===p));window.scrollTo(0,0)}
+window.addEventListener("hashchange",route);
+// make sure the promo video starts as soon as the home page shows
+function playPromo(){document.querySelectorAll(".page video").forEach(v=>{if(v.closest(".page").classList.contains("on")){if(v.dataset.snd!=="1")v.muted=true;const p=v.play();if(p&&p.catch)p.catch(()=>{})}else v.pause()})}
+window.addEventListener("hashchange",playPromo);
+document.addEventListener("DOMContentLoaded",playPromo);
+setTimeout(playPromo,0);
+// mobile fallback: load the video into memory so phones that can't stream it from the host can still play it
+(async function(){try{const r=await fetch("video/tivio_promo_720.mp4");if(!r.ok)return;const u=URL.createObjectURL(await r.blob());document.querySelectorAll(".page video").forEach(v=>{if(!v.paused&&v.readyState>=3)return;v.src=u;v.muted=v.dataset.snd!=="1";v.load()});playPromo()}catch(e){}})();
+document.querySelectorAll("[data-snd-for]").forEach(b=>{const v=$(b.dataset.sndFor);b.onclick=()=>{v.muted=false;v.dataset.snd="1";v.currentTime=0;v.play();b.style.display="none"};v.addEventListener("volumechange",()=>{if(!v.muted)b.style.display="none"})});
+// promo popup: shows once per visit after 6s, or when a desktop visitor heads to leave
+(function(){
+  const pm=$("promo"); $("promoArt").innerHTML=STICK;
+  let shown=false;
+  try{shown=sessionStorage.getItem("tivioPromo")==="1"}catch(e){}
+  const open=()=>{if(shown||$("modal").classList.contains("on"))return;shown=true;try{sessionStorage.setItem("tivioPromo","1")}catch(e){}pm.classList.add("on")};
+  const close=()=>pm.classList.remove("on");
+  setTimeout(open,6000);
+  document.addEventListener("mouseout",e=>{if(!e.relatedTarget&&e.clientY<=0)open()});
+  $("promoX").onclick=close; $("promoLater").onclick=close;
+  pm.onclick=e=>{if(e.target===pm)close()};
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+})();
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();const map={plans:"pricing",how:"how-it-works",included:"whats-included",top:"home"};location.hash=map[b.dataset.go]||b.dataset.go}));
+route();
+
+</script>
+</body>
+</html>
